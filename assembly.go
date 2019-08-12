@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package main
+package c2goasm
 
 import (
 	"fmt"
@@ -127,7 +127,7 @@ func writeGoasmBody(sub Subroutine, stack Stack, stackArgs StackArgs, arguments,
 
 		line, _ = fixLabels(line)
 		line, _, _ = upperCaseJumps(line)
-		line, _ = upperCaseCalls(line)
+		line, _ = upperCaseCalls(line, nil)
 
 		fields := strings.Fields(line)
 		// Test for any non-jmp instruction (lower case mnemonic)
@@ -195,13 +195,12 @@ func writeGoasmEpilogue(sub Subroutine, stack Stack, arguments, returnValues []s
 	return result
 }
 
-func scanBodyForCalls(sub Subroutine) uint {
-
+func scanBodyForCalls(sub Subroutine, stackSizes map[string]uint) uint {
 	stackSize := uint(0)
 
 	for _, line := range sub.body {
 
-		_, size := upperCaseCalls(line)
+		_, size := upperCaseCalls(line, stackSizes)
 
 		if stackSize < size {
 			stackSize = size
@@ -254,7 +253,7 @@ func upperCaseJumps(line string) (string, string, string) {
 }
 
 // Make calls uppercase
-func upperCaseCalls(line string) (string, uint) {
+func upperCaseCalls(line string, stackSizes map[string]uint) (string, uint) {
 
 	// TODO: Make determination of required stack size more sophisticated
 	stackSize := uint(0)
@@ -263,22 +262,26 @@ func upperCaseCalls(line string) (string, uint) {
 	if match := regexpCall.FindStringSubmatch(line); len(match) > 0 {
 		parts := strings.SplitN(line, `call`, 2)
 		fname := strings.TrimSpace(parts[1])
-
-		// replace c stdlib functions with equivalents
-		if fname == "_memcpy" || fname == "memcpy@PLT" { // (Procedure Linkage Table)
-			parts[1] = "clib·_memcpy(SB)"
-			stackSize = 64
-		} else if fname == "_memset" || fname == "memset@PLT" { // (Procedure Linkage Table)
-			parts[1] = "clib·_memset(SB)"
-			stackSize = 64
-		} else if fname == "_floor" || fname == "floor@PLT" { // (Procedure Linkage Table)
-			parts[1] = "clib·_floor(SB)"
-			stackSize = 64
-		} else if fname == "___bzero" {
-			parts[1] = "clib·_bzero(SB)"
-			stackSize = 64
+		ss, ok := stackSizes[fname]
+		if ok {
+			stackSize = ss
+		} else {
+			// replace c stdlib functions with equivalents
+			if fname == "_memcpy" || fname == "memcpy@PLT" { // (Procedure Linkage Table)
+				fname = "clib·_memcpy(SB)"
+				stackSize = 64
+			} else if fname == "_memset" || fname == "memset@PLT" { // (Procedure Linkage Table)
+				fname = "clib·_memset(SB)"
+				stackSize = 64
+			} else if fname == "_floor" || fname == "floor@PLT" { // (Procedure Linkage Table)
+				fname = "clib·_floor(SB)"
+				stackSize = 64
+			} else if fname == "___bzero" {
+				fname = "clib·_bzero(SB)"
+				stackSize = 64
+			}
 		}
-		line = parts[0] + "CALL " + strings.TrimSpace(parts[1])
+		line = parts[0] + "CALL " + fname
 	}
 
 	return line, stackSize

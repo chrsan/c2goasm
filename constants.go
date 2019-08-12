@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package main
+package c2goasm
 
 import (
 	"fmt"
@@ -22,6 +22,8 @@ import (
 	"strconv"
 	"strings"
 )
+
+var Target = "x86"
 
 type Table struct {
 	Name      string
@@ -144,8 +146,8 @@ func defineTable(constants []string, tableName string) Table {
 			}
 			align := 1 << uint(bits)
 			if strings.Contains(line, ".align") &&
-				(strings.Contains(strings.ToLower(*targetFlag), "x86") ||
-					strings.Contains(strings.ToLower(*targetFlag), "amd64")) {
+				(strings.Contains(strings.ToLower(Target), "x86") ||
+					strings.Contains(strings.ToLower(Target), "amd64")) {
 				// For historic reasons, the behavior of .align differs between
 				// architectures. The llvm for x86 alignment is in bytes.
 				// https://reviews.llvm.org/D16549

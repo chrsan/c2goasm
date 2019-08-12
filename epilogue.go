@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package main
+package c2goasm
 
 import (
 	"fmt"
@@ -55,7 +55,6 @@ type Stack struct {
 }
 
 func NewStack(epilogue Epilogue, arguments int, stackSpaceForCalls uint) Stack {
-
 	s := Stack{localSpace: epilogue.StackSize, alignedStack: epilogue.AlignedStack, freeSpace: stackSpaceForCalls}
 
 	if arguments-len(registers) > 0 {
@@ -77,7 +76,6 @@ func NewStack(epilogue Epilogue, arguments int, stackSpaceForCalls uint) Stack {
 			s.untouchedSpace = 8
 		}
 	}
-
 	return s
 }
 
