@@ -27,14 +27,14 @@ func TestAssemblyAlignedWithTableWithStackArgs(t *testing.T) {
 	epilogue.Pops = append(epilogue.Pops, "rbp", "r15", "r14", "r13", "r12", "rbx")
 	table := Table{Name: "LCDATA3"}
 
-	subroutine := Subroutine{name: "SimdSse2MedianFilterRhomb5x5", epilogue: epilogue, table: table}
+	subroutine := Subroutine{Name: "SimdSse2MedianFilterRhomb5x5", Epilogue: epilogue, Table: table}
 	arguments, returnValues := []string{}, []string{}
 	arguments = append(arguments, "src", "srcStride", "width", "height", "channelCount", "dst", "dstStride")
 
-	stack := NewStack(epilogue, len(arguments), 0)
+	subroutine.Stack = NewStack(epilogue, len(arguments), 0)
 
-	lines := writeGoasmPrologue(subroutine, stack, arguments, returnValues)
-	lines = append(lines, writeGoasmEpilogue(subroutine, stack, arguments, returnValues)...)
+	lines := writeGoasmPrologue(subroutine, arguments, returnValues)
+	lines = append(lines, writeGoasmEpilogue(subroutine, arguments, returnValues)...)
 
 	alignedWithTable := `TEXT ·_SimdSse2MedianFilterRhomb5x5(SB), $96-56
 
@@ -64,7 +64,7 @@ func TestAssemblyAlignedWithTableWithStackArgs(t *testing.T) {
 
 	test := "mov	r11, qword ptr [rbp + 16]"
 
-	result := fixRbpPlusLoad(test, StackArgs{Number: 1, OffsetToFirst: 16}, stack)
+	result := fixRbpPlusLoad(test, StackArgs{Number: 1, OffsetToFirst: 16}, subroutine.Stack)
 
 	dstStrideMov := `mov	r11, qword ptr 64[rsp] /* [rbp + 16] */`
 	if dstStrideMov != result {
@@ -78,14 +78,14 @@ func TestAssemblyUnalignedWithTableWithStackArgs(t *testing.T) {
 	epilogue.Pops = append(epilogue.Pops, "rbp", "r15", "r14", "r13", "r12", "rbx")
 	table := Table{Name: "LCDATA2"}
 
-	subroutine := Subroutine{name: "SimdSse2MedianFilterSquare3x3", epilogue: epilogue, table: table}
+	subroutine := Subroutine{Name: "SimdSse2MedianFilterSquare3x3", Epilogue: epilogue, Table: table}
 	arguments, returnValues := []string{}, []string{}
 	arguments = append(arguments, "src", "srcStride", "width", "height", "channelCount", "dst", "dstStride")
 
-	stack := NewStack(epilogue, len(arguments), 0)
+	subroutine.Stack = NewStack(epilogue, len(arguments), 0)
 
-	lines := writeGoasmPrologue(subroutine, stack, arguments, returnValues)
-	lines = append(lines, writeGoasmEpilogue(subroutine, stack, arguments, returnValues)...)
+	lines := writeGoasmPrologue(subroutine, arguments, returnValues)
+	lines = append(lines, writeGoasmEpilogue(subroutine, arguments, returnValues)...)
 
 	unalignedWithTable := `TEXT ·_SimdSse2MedianFilterSquare3x3(SB), $24-56
 
@@ -112,7 +112,7 @@ func TestAssemblyUnalignedWithTableWithStackArgs(t *testing.T) {
 
 	test := "mov    rax, qword [rbp + 16]"
 
-	result := fixRbpPlusLoad(test, StackArgs{Number: 1, OffsetToFirst: 16}, stack)
+	result := fixRbpPlusLoad(test, StackArgs{Number: 1, OffsetToFirst: 16}, subroutine.Stack)
 
 	dstStrideMov := `mov    rax, qword 8[rsp] /* [rbp + 16] */`
 	if dstStrideMov != result {
@@ -127,14 +127,14 @@ func TestAssemblyUnalignedWithTableWithStackArgsWithStackZeroSize(t *testing.T) 
 	epilogue.Pops = append(epilogue.Pops, "rbp", "r15", "r14", "r13", "r12", "rbx")
 	table := Table{Name: "LCDATA1"}
 
-	subroutine := Subroutine{name: "SimdSse2MedianFilterRhomb3x3", epilogue: epilogue, table: table}
+	subroutine := Subroutine{Name: "SimdSse2MedianFilterRhomb3x3", Epilogue: epilogue, Table: table}
 	arguments, returnValues := []string{}, []string{}
 	arguments = append(arguments, "src", "srcStride", "width", "height", "channelCount", "dst", "dstStride")
 
-	stack := NewStack(epilogue, len(arguments), 0)
+	subroutine.Stack = NewStack(epilogue, len(arguments), 0)
 
-	lines := writeGoasmPrologue(subroutine, stack, arguments, returnValues)
-	lines = append(lines, writeGoasmEpilogue(subroutine, stack, arguments, returnValues)...)
+	lines := writeGoasmPrologue(subroutine, arguments, returnValues)
+	lines = append(lines, writeGoasmEpilogue(subroutine, arguments, returnValues)...)
 
 	unalignedWithTableWithStackZeroSize := `TEXT ·_SimdSse2MedianFilterRhomb3x3(SB), $16-56
 
@@ -161,7 +161,7 @@ func TestAssemblyUnalignedWithTableWithStackArgsWithStackZeroSize(t *testing.T) 
 
 	test := "mov    rax, qword [rbp + 16]"
 
-	result := fixRbpPlusLoad(test, StackArgs{Number: 1, OffsetToFirst: 16}, stack)
+	result := fixRbpPlusLoad(test, StackArgs{Number: 1, OffsetToFirst: 16}, subroutine.Stack)
 
 	dstStrideMov := `mov    rax, qword 0[rsp] /* [rbp + 16] */`
 	if dstStrideMov != result {

@@ -21,50 +21,52 @@ import (
 	"strings"
 )
 
-func Process(assembly []string, goCompanionFile string, stackSizes map[string]uint) ([]string, error) {
+type Result struct {
+	Sub Subroutine
+	ASM []string
+}
+
+func Process(assembly []string, goCompanionFile string, stackSizes map[string]uint) ([]Result, error) {
 
 	// Split out the assembly source into subroutines
 	subroutines := segmentSource(assembly)
 	tables := segmentConstTables(assembly)
 
-	var result []string
+	var result []Result
 
 	// Iterate over all subroutines
-	for isubroutine, sub := range subroutines {
-
-		golangArgs, golangReturns := parseCompanionFile(goCompanionFile, sub.name)
-		stackArgs := argumentsOnStack(sub.body)
+	for _, sub := range subroutines {
+		var r Result
+		golangArgs, golangReturns := parseCompanionFile(goCompanionFile, sub.Name)
+		stackArgs := argumentsOnStack(sub.Body)
 		if len(golangArgs) > 6 && len(golangArgs)-6 < stackArgs.Number {
 			panic(fmt.Sprintf("Found too few arguments on stack (%d) but needed %d", len(golangArgs)-6, stackArgs.Number))
 		}
 
 		// Check for constants table
-		if table := getCorrespondingTable(sub.body, tables); table.isPresent() {
+		if table := getCorrespondingTable(sub.Body, tables); table.isPresent() {
 
 			// Output constants table
-			result = append(result, strings.Split(table.Constants, "\n")...)
-			result = append(result, "") // append empty line
+			r.ASM = append(r.ASM, strings.Split(table.Constants, "\n")...)
+			r.ASM = append(r.ASM, "") // append empty line
 
-			sub.table = table
+			sub.Table = table
 		}
 
 		// Create object to get offsets for stack pointer
-		stack := NewStack(sub.epilogue, len(golangArgs), scanBodyForCalls(sub, stackSizes))
+		sub.Stack = NewStack(sub.Epilogue, len(golangArgs), scanBodyForCalls(sub, stackSizes))
 
 		// Write header for subroutine in go assembly
-		result = append(result, writeGoasmPrologue(sub, stack, golangArgs, golangReturns)...)
+		r.ASM = append(r.ASM, writeGoasmPrologue(sub, golangArgs, golangReturns)...)
 
 		// Write body of code
-		assembly, err := writeGoasmBody(sub, stack, stackArgs, golangArgs, golangReturns)
+		assembly, err := writeGoasmBody(sub, stackArgs, golangArgs, golangReturns)
 		if err != nil {
 			panic(fmt.Sprintf("writeGoasmBody: %v", err))
 		}
-		result = append(result, assembly...)
-
-		if isubroutine < len(subroutines)-1 {
-			// Empty lines before next subroutine
-			result = append(result, "\n", "\n")
-		}
+		r.ASM = append(r.ASM, assembly...)
+		r.Sub = sub
+		result = append(result, r)
 	}
 
 	return result, nil

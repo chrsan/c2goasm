@@ -39,7 +39,7 @@ var regexpRbpLoadLower = regexp.MustCompile(`\[rbp - ([0-9]+)\]`)
 var regexpStripComments = regexp.MustCompile(`\s*#?#\s.*$`)
 
 // Write the prologue for the subroutine
-func writeGoasmPrologue(sub Subroutine, stack Stack, arguments, returnValues []string) []string {
+func writeGoasmPrologue(sub Subroutine, arguments, returnValues []string) []string {
 
 	//if sub.name == "SimdSse2MedianFilterRhomb3x3" {
 	//	fmt.Println("sub.name", sub.name)
@@ -52,7 +52,7 @@ func writeGoasmPrologue(sub Subroutine, stack Stack, arguments, returnValues []s
 	var result []string
 
 	// Output definition of subroutine
-	result = append(result, fmt.Sprintf("TEXT ·_%s(SB), $%d-%d", sub.name, stack.GolangLocalStackFrameSize(),
+	result = append(result, fmt.Sprintf("TEXT ·_%s(SB), $%d-%d", sub.Name, sub.Stack.GolangLocalStackFrameSize(),
 		getTotalSizeOfArgumentsAndReturnValues(0, len(arguments)-1, returnValues)), "")
 
 	// Load Golang arguments into registers
@@ -70,45 +70,45 @@ func writeGoasmPrologue(sub Subroutine, stack Stack, arguments, returnValues []s
 	}
 
 	// Setup the stack pointer for the C code
-	if sub.epilogue.AlignedStack {
+	if sub.Epilogue.AlignedStack {
 		// Align stack pointer to next multiple of alignment space
 		result = append(result, fmt.Sprintf("    MOVQ SP, BP"))
-		result = append(result, fmt.Sprintf("    ADDQ $%d, SP", stack.StackPointerOffsetForC() /*sub.epilogue.AlignValue*/))
-		result = append(result, fmt.Sprintf("    ANDQ $-%d, SP", sub.epilogue.AlignValue))
+		result = append(result, fmt.Sprintf("    ADDQ $%d, SP", sub.Stack.StackPointerOffsetForC() /*sub.epilogue.AlignValue*/))
+		result = append(result, fmt.Sprintf("    ANDQ $-%d, SP", sub.Epilogue.AlignValue))
 
 		// Save original stack pointer right below newly aligned stack pointer
-		result = append(result, fmt.Sprintf("    MOVQ BP, %d(SP)", stack.OffsetForSavedSP())) // Save original SP
+		result = append(result, fmt.Sprintf("    MOVQ BP, %d(SP)", sub.Stack.OffsetForSavedSP())) // Save original SP
 
-	} else if stack.StackPointerOffsetForC() != 0 { // sub.epilogue.getStackSpace(len(arguments)) != 0 {
+	} else if sub.Stack.StackPointerOffsetForC() != 0 { // sub.epilogue.getStackSpace(len(arguments)) != 0 {
 		// Create stack space as needed
-		result = append(result, fmt.Sprintf("    ADDQ $%d, SP", stack.StackPointerOffsetForC() /*sub.epilogue.getFreeSpaceAtBottom())*/))
+		result = append(result, fmt.Sprintf("    ADDQ $%d, SP", sub.Stack.StackPointerOffsetForC() /*sub.epilogue.getFreeSpaceAtBottom())*/))
 	}
 
 	// Save Golang arguments beyond 6 onto stack
 	for iarg := len(arguments) - 1; iarg-len(registers) >= 0; iarg-- {
-		result = append(result, fmt.Sprintf("    MOVQ %s, %d(SP)", registersAdditional[iarg-len(registers)], stack.OffsetForGoArg(iarg)))
+		result = append(result, fmt.Sprintf("    MOVQ %s, %d(SP)", registersAdditional[iarg-len(registers)], sub.Stack.OffsetForGoArg(iarg)))
 	}
 
 	// Setup base pointer for loading constants
-	if sub.table.isPresent() {
-		result = append(result, fmt.Sprintf("    LEAQ %s<>(SB), BP", sub.table.Name))
+	if sub.Table.isPresent() {
+		result = append(result, fmt.Sprintf("    LEAQ %s<>(SB), BP", sub.Table.Name))
 	}
 
 	return append(result, ``)
 }
 
-func writeGoasmBody(sub Subroutine, stack Stack, stackArgs StackArgs, arguments, returnValues []string) ([]string, error) {
+func writeGoasmBody(sub Subroutine, stackArgs StackArgs, arguments, returnValues []string) ([]string, error) {
 
 	var result []string
 
-	for iline, line := range sub.body {
+	for iline, line := range sub.Body {
 
 		// If part of epilogue
-		if iline >= sub.epilogue.Start && iline < sub.epilogue.End {
+		if iline >= sub.Epilogue.Start && iline < sub.Epilogue.End {
 
 			// Instead of last line, output go assembly epilogue
-			if iline == sub.epilogue.End-1 {
-				result = append(result, writeGoasmEpilogue(sub, stack, arguments, returnValues)...)
+			if iline == sub.Epilogue.End-1 {
+				result = append(result, writeGoasmEpilogue(sub, arguments, returnValues)...)
 			}
 			continue
 		}
@@ -145,11 +145,11 @@ func writeGoasmBody(sub Subroutine, stack Stack, stackArgs StackArgs, arguments,
 
 		line = fixShiftInstructions(line)
 		line = fixMovabsInstructions(line)
-		if sub.table.isPresent() {
-			line = fixPicLabels(line, sub.table)
+		if sub.Table.isPresent() {
+			line = fixPicLabels(line, sub.Table)
 		}
 
-		line = fixRbpPlusLoad(line, stackArgs, stack)
+		line = fixRbpPlusLoad(line, stackArgs, sub.Stack)
 
 		detectRbpMinusMemoryAccess(line)
 		detectJumpTable(line)
@@ -163,21 +163,21 @@ func writeGoasmBody(sub Subroutine, stack Stack, stackArgs StackArgs, arguments,
 }
 
 // Write the epilogue for the subroutine
-func writeGoasmEpilogue(sub Subroutine, stack Stack, arguments, returnValues []string) []string {
+func writeGoasmEpilogue(sub Subroutine, arguments, returnValues []string) []string {
 
 	var result []string
 
 	// Restore the stack pointer
-	if sub.epilogue.AlignedStack {
+	if sub.Epilogue.AlignedStack {
 		// For an aligned stack, restore the stack pointer from the stack itself
-		result = append(result, fmt.Sprintf("    MOVQ %d(SP), SP", stack.OffsetForSavedSP()))
-	} else if stack.StackPointerOffsetForC() != 0 {
+		result = append(result, fmt.Sprintf("    MOVQ %d(SP), SP", sub.Stack.OffsetForSavedSP()))
+	} else if sub.Stack.StackPointerOffsetForC() != 0 {
 		// For an unaligned stack, reverse addition in order restore the stack pointer
-		result = append(result, fmt.Sprintf("    SUBQ $%d, SP", stack.StackPointerOffsetForC()))
+		result = append(result, fmt.Sprintf("    SUBQ $%d, SP", sub.Stack.StackPointerOffsetForC()))
 	}
 
 	// Clear upper half of YMM register, if so done in the original code
-	if sub.epilogue.VZeroUpper {
+	if sub.Epilogue.VZeroUpper {
 		result = append(result, "    VZEROUPPER")
 	}
 
@@ -198,7 +198,7 @@ func writeGoasmEpilogue(sub Subroutine, stack Stack, arguments, returnValues []s
 func scanBodyForCalls(sub Subroutine, stackSizes map[string]uint) uint {
 	stackSize := uint(0)
 
-	for _, line := range sub.body {
+	for _, line := range sub.Body {
 
 		_, size := upperCaseCalls(line, stackSizes)
 

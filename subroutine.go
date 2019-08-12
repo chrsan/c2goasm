@@ -27,10 +27,11 @@ import (
 var regexpRet = regexp.MustCompile(`^\s*ret`)
 
 type Subroutine struct {
-	name     string
-	body     []string
-	epilogue Epilogue
-	table    Table
+	Name     string
+	Body     []string
+	Epilogue Epilogue
+	Table    Table
+	Stack    Stack
 }
 
 type Global struct {
@@ -118,9 +119,9 @@ func extractSubroutine(lineRet int, src []string, global Global) Subroutine {
 	}
 
 	subroutine := Subroutine{
-		name:     global.globalName,
-		body:     src[bodyStart:bodyEnd],
-		epilogue: extractEpilogue(src[bodyStart:bodyEnd]),
+		Name:     global.globalName,
+		Body:     src[bodyStart:bodyEnd],
+		Epilogue: extractEpilogue(src[bodyStart:bodyEnd]),
 	}
 
 	// Remove prologue lines from subroutine
@@ -131,14 +132,14 @@ func extractSubroutine(lineRet int, src []string, global Global) Subroutine {
 
 func (s *Subroutine) removePrologueLines(src []string, bodyStart int, bodyEnd int) {
 
-	prologueLines := getPrologueLines(src[bodyStart:bodyEnd], &s.epilogue)
+	prologueLines := getPrologueLines(src[bodyStart:bodyEnd], &s.Epilogue)
 
 	// Remove prologue lines from body
-	s.body = s.body[prologueLines:]
+	s.Body = s.Body[prologueLines:]
 
 	// Adjust range of epilogue accordingly
-	s.epilogue.Start -= prologueLines
-	s.epilogue.End -= prologueLines
+	s.Epilogue.Start -= prologueLines
+	s.Epilogue.End -= prologueLines
 }
 
 func extractEpilogue(src []string) Epilogue {

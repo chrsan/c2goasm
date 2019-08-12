@@ -56,7 +56,7 @@ func subroutineEqual(a, b []Subroutine) bool {
 	}
 
 	for i := range a {
-		if !(a[i].name == b[i].name && equalString(a[i].body, b[i].body)) {
+		if !(a[i].Name == b[i].Name && equalString(a[i].Body, b[i].Body)) {
 			return false
 		}
 	}
@@ -178,7 +178,7 @@ LBB0_15:                                ## %_ZN4Simd4Avx210BgraToGrayILb1EEEvPKh
 `, "\n")
 
 	subroutine1 := []Subroutine{}
-	subroutine1 = append(subroutine1, Subroutine{name: "SimdAvx2BgraToGray", body: src1[25:98]})
+	subroutine1 = append(subroutine1, Subroutine{Name: "SimdAvx2BgraToGray", Body: src1[25:98]})
 
 	testSubroutine(t, src1, subroutine1)
 
@@ -393,9 +393,9 @@ LBB2_20:                                ## %_ZN4Simd4Avx213Yuv422pToBgraILb1EEEv
 .subsections_via_symbols`, "\n")
 
 	subroutine2 := []Subroutine{}
-	subroutine2 = append(subroutine2, Subroutine{name: "SimdAvx2Yuv444pToBgra", body: src2[23:60]})
-	subroutine2 = append(subroutine2, Subroutine{name: "SimdAvx2Yuv420pToBgra", body: src2[84:120]})
-	subroutine2 = append(subroutine2, Subroutine{name: "SimdAvx2Yuv422pToBgra", body: src2[144:207]})
+	subroutine2 = append(subroutine2, Subroutine{Name: "SimdAvx2Yuv444pToBgra", Body: src2[23:60]})
+	subroutine2 = append(subroutine2, Subroutine{Name: "SimdAvx2Yuv420pToBgra", Body: src2[84:120]})
+	subroutine2 = append(subroutine2, Subroutine{Name: "SimdAvx2Yuv422pToBgra", Body: src2[144:207]})
 
 	testSubroutine(t, src2, subroutine2)
 
@@ -416,7 +416,7 @@ __ZN4Simd4Avx214MultiplyAndAddEPfS1_S1_S1_: ## @_ZN4Simd4Avx214MultiplyAndAddEPf
 .subsections_via_symbols`, "\n")
 
 	subroutine3 := []Subroutine{}
-	subroutine3 = append(subroutine3, Subroutine{name: "SimdAvx2MultiplyAndAdd", body: src3[6:13]})
+	subroutine3 = append(subroutine3, Subroutine{Name: "SimdAvx2MultiplyAndAdd", Body: src3[6:13]})
 
 	testSubroutine(t, src3, subroutine3)
 
@@ -451,26 +451,26 @@ __ZL1a:
 `, "\n")
 
 	subroutine4 := []Subroutine{}
-	subroutine4 = append(subroutine4, Subroutine{name: "MultiplyAndAddConstant", body: src4[9:16]})
+	subroutine4 = append(subroutine4, Subroutine{Name: "MultiplyAndAddConstant", Body: src4[9:16]})
 
 	testSubroutine(t, src4, subroutine4)
 
 	subroutine5 := []Subroutine{}
-	subroutine5 = append(subroutine5, Subroutine{name: "SimdSse2BgraToYuv420p", body: srcOsx[43:53]})
-	subroutine5 = append(subroutine5, Subroutine{name: "SimdSse2BgraToYuv422p", body: srcOsx[94:103]})
-	subroutine5 = append(subroutine5, Subroutine{name: "SimdSse2BgraToYuv444p", body: srcOsx[142:151]})
+	subroutine5 = append(subroutine5, Subroutine{Name: "SimdSse2BgraToYuv420p", Body: srcOsx[43:53]})
+	subroutine5 = append(subroutine5, Subroutine{Name: "SimdSse2BgraToYuv422p", Body: srcOsx[94:103]})
+	subroutine5 = append(subroutine5, Subroutine{Name: "SimdSse2BgraToYuv444p", Body: srcOsx[142:151]})
 
 	testSubroutine(t, srcOsx, subroutine5)
 
 	subroutine6 := []Subroutine{}
-	subroutine6 = append(subroutine6, Subroutine{name: "SimdSse2BgraToYuv420p", body: srcClang[41:51]})
-	subroutine6 = append(subroutine6, Subroutine{name: "SimdSse2BgraToYuv422p", body: srcClang[94:103]})
-	subroutine6 = append(subroutine6, Subroutine{name: "SimdSse2BgraToYuv444p", body: srcClang[144:153]})
+	subroutine6 = append(subroutine6, Subroutine{Name: "SimdSse2BgraToYuv420p", Body: srcClang[41:51]})
+	subroutine6 = append(subroutine6, Subroutine{Name: "SimdSse2BgraToYuv422p", Body: srcClang[94:103]})
+	subroutine6 = append(subroutine6, Subroutine{Name: "SimdSse2BgraToYuv444p", Body: srcClang[144:153]})
 
 	testSubroutine(t, srcClang, subroutine6)
 
 	subroutine7 := []Subroutine{}
-	subroutine7 = append(subroutine7, Subroutine{name: "SimdSse2Bgr48pToBgra32", body: srcRetInMiddle[36:291]})
+	subroutine7 = append(subroutine7, Subroutine{Name: "SimdSse2Bgr48pToBgra32", Body: srcRetInMiddle[36:291]})
 
 	testSubroutine(t, srcRetInMiddle, subroutine7)
 }

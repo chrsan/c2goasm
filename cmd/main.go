@@ -215,11 +215,18 @@ func main() {
 
 	result, err := c2goasm.Process(lines, goCompanion, stackSizes)
 	if err != nil {
-		fmt.Print(err)
-		os.Exit(-1)
+		log.Fatalf("Process: %v", err)
 	}
 
-	err = writeLines(result, assemblyFile, true)
+	var asm []string
+	for i, r := range result {
+		asm = append(asm, r.ASM...)
+		if i < len(result)-1 {
+			asm = append(asm, "\n", "\n")
+		}
+	}
+
+	err = writeLines(asm, assemblyFile, true)
 	if err != nil {
 		log.Fatalf("writeLines: %s", err)
 	}
