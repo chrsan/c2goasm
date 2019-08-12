@@ -55,15 +55,8 @@ func argumentsOnStack(lines []string) StackArgs {
 	return StackArgs{OffsetToFirst: 0, Number: 0}
 }
 
-func parseCompanionFile(goCompanion, protoName string) ([]string, []string) {
-
-	gocode, err := ReadLines(goCompanion)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to read companion go code: %v", err))
-	}
-
-	for _, goline := range gocode {
-
+func parseCompanionFile(goCompanion []string, protoName string) ([]string, []string) {
+	for _, goline := range goCompanion {
 		ok, args, rets, err := getGolangArgs(protoName, goline)
 		if err != nil {
 			panic(fmt.Sprintf("Error: %v", err))

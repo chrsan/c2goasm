@@ -208,12 +208,17 @@ func main() {
 	c2goasm.Target = *targetFlag
 
 	fmt.Println("Processing", flag.Arg(0))
-	lines, err := c2goasm.ReadLines(flag.Arg(0))
+	assemblyLines, err := c2goasm.ReadLines(flag.Arg(0))
 	if err != nil {
 		log.Fatalf("readLines: %s", err)
 	}
 
-	result, err := c2goasm.Process(lines, goCompanion, stackSizes)
+	goCompanionLines, err := c2goasm.ReadLines(goCompanion)
+	if err != nil {
+		log.Fatalf("readLines: %s", err)
+	}
+
+	result, err := c2goasm.Process(assemblyLines, goCompanionLines, stackSizes)
 	if err != nil {
 		log.Fatalf("Process: %v", err)
 	}

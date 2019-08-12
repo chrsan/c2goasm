@@ -26,7 +26,7 @@ type Result struct {
 	ASM []string
 }
 
-func Process(assembly []string, goCompanionFile string, stackSizes map[string]uint) ([]Result, error) {
+func Process(assembly []string, goCompanion []string, stackSizes map[string]uint) ([]Result, error) {
 
 	// Split out the assembly source into subroutines
 	subroutines := segmentSource(assembly)
@@ -37,7 +37,7 @@ func Process(assembly []string, goCompanionFile string, stackSizes map[string]ui
 	// Iterate over all subroutines
 	for _, sub := range subroutines {
 		var r Result
-		golangArgs, golangReturns := parseCompanionFile(goCompanionFile, sub.Name)
+		golangArgs, golangReturns := parseCompanionFile(goCompanion, sub.Name)
 		stackArgs := argumentsOnStack(sub.Body)
 		if len(golangArgs) > 6 && len(golangArgs)-6 < stackArgs.Number {
 			panic(fmt.Sprintf("Found too few arguments on stack (%d) but needed %d", len(golangArgs)-6, stackArgs.Number))
