@@ -17,7 +17,6 @@
 package c2goasm
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -72,10 +71,9 @@ var regexpFuncAndArgs = regexp.MustCompile(`^\s*func\s+([^\(]*)\(([^\)]*)\)(.*)`
 var regexpReturnVals = regexp.MustCompile(`^\((.*)\)`)
 
 func getGolangArgs(protoName, goline string) (isFunc bool, args, rets []string, err error) {
-
 	// Search for name of function and arguments
 	if match := regexpFuncAndArgs.FindStringSubmatch(goline); len(match) > 2 {
-		if match[1] == "_"+protoName {
+		if match[1] == protoName {
 
 			args, rets = []string{}, []string{}
 			if match[2] != "" {
@@ -92,7 +90,7 @@ func getGolangArgs(protoName, goline string) (isFunc bool, args, rets []string, 
 						rets = append(rets, strings.Fields(ret)[0])
 					}
 				} else {
-					return false, args, rets, errors.New(fmt.Sprintf("Badly formatted return argument (please use parenthesis and proper arguments naming): %s", trailer))
+					return false, args, rets, fmt.Errorf("Badly formatted return argument (please use parenthesis and proper arguments naming): %s", trailer)
 				}
 
 			}
