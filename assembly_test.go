@@ -36,7 +36,7 @@ func TestAssemblyAlignedWithTableWithStackArgs(t *testing.T) {
 	lines := writeGoasmPrologue(subroutine, arguments, returnValues)
 	lines = append(lines, writeGoasmEpilogue(subroutine, arguments, returnValues)...)
 
-	alignedWithTable := `TEXT ·_SimdSse2MedianFilterRhomb5x5(SB), $96-56
+	alignedWithTable := `TEXT ·SimdSse2MedianFilterRhomb5x5(SB), $96-56
 
 	MOVQ src+0(FP), DI
 	MOVQ srcStride+8(FP), SI
@@ -87,7 +87,7 @@ func TestAssemblyUnalignedWithTableWithStackArgs(t *testing.T) {
 	lines := writeGoasmPrologue(subroutine, arguments, returnValues)
 	lines = append(lines, writeGoasmEpilogue(subroutine, arguments, returnValues)...)
 
-	unalignedWithTable := `TEXT ·_SimdSse2MedianFilterSquare3x3(SB), $24-56
+	unalignedWithTable := `TEXT ·SimdSse2MedianFilterSquare3x3(SB), $24-56
 
 	MOVQ src+0(FP), DI
 	MOVQ srcStride+8(FP), SI
@@ -136,7 +136,7 @@ func TestAssemblyUnalignedWithTableWithStackArgsWithStackZeroSize(t *testing.T) 
 	lines := writeGoasmPrologue(subroutine, arguments, returnValues)
 	lines = append(lines, writeGoasmEpilogue(subroutine, arguments, returnValues)...)
 
-	unalignedWithTableWithStackZeroSize := `TEXT ·_SimdSse2MedianFilterRhomb3x3(SB), $16-56
+	unalignedWithTableWithStackZeroSize := `TEXT ·SimdSse2MedianFilterRhomb3x3(SB), $16-56
 
 	MOVQ src+0(FP), DI
 	MOVQ srcStride+8(FP), SI
